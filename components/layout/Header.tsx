@@ -6,6 +6,8 @@ import { useAlertStore } from '@/store/alert.store'
 import { useConnectionStore } from '@/store/connection.store'
 import { useRecommendations } from '@/features/recommendations/hooks/useRecommendations'
 import { clearDbIdCookie } from '@/lib/cookies'
+import { useLogout } from '@/features/auth/hooks/useLogout'
+import { useAuthStore } from '@/store/auth.store'
 
 const TIME_RANGES = ['5m', '1h', '24h'] as const
 
@@ -35,6 +37,8 @@ export function Header() {
   const { dbId, clearConnection } = useConnectionStore()
   const { filters, setFilters } = useAlertStore()
   const status = useSystemStatus(dbId)
+  const email = useAuthStore((s) => s.email)
+  const { logout, isLoading: isLoggingOut } = useLogout()
 
   const handleDisconnect = () => {
     clearDbIdCookie()
@@ -79,6 +83,23 @@ export function Header() {
           className="text-xs text-gray-500 hover:text-red-400 transition-colors duration-100"
         >
           Disconnect
+        </button>
+
+        <span className="w-px h-4 bg-gray-700 mx-1" />
+
+        {email && (
+          <span className="text-xs text-gray-600 max-w-[120px] truncate" title={email}>
+            {email}
+          </span>
+        )}
+
+        <button
+          type="button"
+          onClick={() => logout()}
+          disabled={isLoggingOut}
+          className="text-xs text-gray-500 hover:text-red-400 transition-colors duration-100 disabled:opacity-50"
+        >
+          Sign out
         </button>
       </div>
     </header>

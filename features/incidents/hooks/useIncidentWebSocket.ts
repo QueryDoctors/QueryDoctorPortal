@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/auth.store'
 
 const WS_BASE =
   (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000')
@@ -9,17 +10,19 @@ const RECONNECT_DELAY_MS = 3_000
 
 export function useIncidentWebSocket(dbId: string | null | undefined) {
   const queryClient = useQueryClient()
+  const accessToken = useAuthStore((s) => s.accessToken)
   const wsRef = useRef<WebSocket | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!dbId) return
+    if (!dbId || !accessToken) return
 
     let cancelled = false
 
     function connect() {
       if (cancelled) return
-      const ws = new WebSocket(`${WS_BASE}/incidents/ws/${dbId}`)
+      // Backend WS auth reads token from query param (HTTP headers not available in WS)
+      const ws = new WebSocket(`${WS_BASE}/incidents/ws/${dbId}?token=${accessToken}`)
       wsRef.current = ws
 
       ws.onmessage = (event) => {
@@ -36,7 +39,6 @@ export function useIncidentWebSocket(dbId: string | null | undefined) {
         }
       }
 
-      // Keepalive ping every 30s to prevent proxy timeouts
       ws.onopen = () => {
         const ping = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) ws.send('ping')
@@ -52,5 +54,5 @@ export function useIncidentWebSocket(dbId: string | null | undefined) {
       if (timerRef.current) clearTimeout(timerRef.current)
       wsRef.current?.close()
     }
-  }, [dbId, queryClient])
+  }, [dbId, accessToken, queryClient])
 }
