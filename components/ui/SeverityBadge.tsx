@@ -3,7 +3,7 @@ interface Props {
 }
 
 const CLASSES: Record<Props['severity'], string> = {
-  critical: 'bg-red-500 text-white',
+  critical: 'bg-red-700 text-white animate-pulse',
   warning: 'bg-yellow-500 text-gray-900',
   info: 'bg-blue-500 text-white',
 }
